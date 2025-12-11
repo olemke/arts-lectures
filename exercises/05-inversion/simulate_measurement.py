@@ -42,7 +42,7 @@ vmr_h2o_perp[vmr_h2o_perp<0]=vmr_h2o[-1]
 
 atm_true.set("abs_species-H2O", np.array(vmr_h2o_perp[np.newaxis,:,np.newaxis,np.newaxis]))
 
-plt.style.use('seaborn-v0_8')
+
 
 fig, ax =plt.subplots(1,2)
 
