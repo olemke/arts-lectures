@@ -4,7 +4,7 @@
 Temperature Retrieval Analysis Script
 
 This script performs temperature profile retrievals from radiometric observations
-in the 50 GHz range using the Optimal Estimation Method (OEM).
+in the 183 GHz range using the Optimal Estimation Method (OEM).
 
 The script:
 1. Loads atmospheric data (true profiles, a priori data from dropsondes)
@@ -23,8 +23,8 @@ Key Features:
 Required Data Files:
 - atmosphere/atmospheres_true.xml: True atmospheric profiles
 - observation/dropsonde.xml: A priori and background data
-- observation/SensorCharacteristics_50GHz.xml: Sensor characteristics
-- observation/y_obs_50GHz.xml: Observation vector
+- observation/SensorCharacteristics_183GHz.xml: Sensor characteristics
+- observation/y_obs_183GHz.xml: Observation vector
 - observation/lat.xml: Latitude information
 
 Dependencies:
