@@ -473,11 +473,18 @@ for i, name in enumerate(plot_vars):
             clim=[np.min(data), np.max(data)],
             rasterized=True,
         )
+    elif 'mass_density' in name:
+        data[data < 1e-10] = 1e-10
+        data = np.log10(data)
+        cmap = "Blues"
+        pcm = ax_k.pcolormesh(
+            lat, p_grid / 1e3, data.T, cmap=cmap, clim=[-6, -2], rasterized=True
+        )
 
     else:
         data[data < 1e-10] = 1e-10
         data = np.log10(data)
-        cmap = "Blues"
+        cmap = "Greys"
         pcm = ax_k.pcolormesh(
             lat, p_grid / 1e3, data.T, cmap=cmap, clim=[-6, 1], rasterized=True
         )
