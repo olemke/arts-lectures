@@ -54,11 +54,10 @@ from typhon.constants import gas_constant_water_vapor
 # %% paths / constants
 
 data_folder = (
-    "/scratch/u237/user_data/mbrath/EarthCARE_Scenes/39320_test_data/"
+    "/scratch2/u237/user_data/mbrath/EarthCARE_Scenes/39320_test_data/"
 )
 
-# lat_range = [15.5, 16.5]  # °
-lat_range = [16, 17]
+lat_range = [13,15]  # degrees
 alt_max = 15e3  # m
 
 # Amount of Oxygen
@@ -67,8 +66,11 @@ O2vmr = 0.2095
 # Amount of Nitrogen
 N2vmr = 0.7808
 
-#T emperature offset of dropsonde
+# Temperature offset of dropsonde
 T_offset=1. #K
+
+# water vapor offset in vmr of dropsonde
+WV_offset=0.1
 
 # %% load data
 
@@ -352,50 +354,86 @@ for i, name in enumerate(col_names):
 
 
 # %% Create 'dropsonde data'
-# simply select one of these profiles
-# to keep it simple we simply take the middle
 
-idx_selected = N_profiles // 2
+# here we create two dropsonde data. one for the temperature retrieval exercise
+# and one for the water vapor retrieval exercise
+# The main difference is that the dropsonde for the water vapor retrieval has
+# an offset in water vapor vmr and higher noise
 
-dropsonde = pa.arts.GriddedField4()
-dropsonde.set_grid(0, ["T", "z", "abs_species-H2O"])
-dropsonde.set_grid(1, batch_atms[idx_selected].grids[1][:])
-dropsonde.data = np.zeros((3, len(dropsonde.grids[1]), 1, 1))
-dropsonde.data[0, :, 0, 0] = batch_atms[idx_selected].data[0, :, 0, 0]
-dropsonde.data[1, :, 0, 0] = batch_atms[idx_selected].data[1, :, 0, 0]
-dropsonde.data[2, :, 0, 0] = batch_atms[idx_selected].data[14, :, 0, 0]
+idx_T = 0 #N_profiles -1
+idx_WV = N_profiles -1
+
+dropsonde_T = pa.arts.GriddedField4()
+dropsonde_T.set_grid(0, ["T", "z", "abs_species-H2O"])
+dropsonde_T.set_grid(1, batch_atms[idx_T].grids[1][:])
+dropsonde_T.data = np.zeros((3, len(dropsonde_T.grids[1]), 1, 1))
+dropsonde_T.data[0, :, 0, 0] = batch_atms[idx_T].data[0, :, 0, 0]
+dropsonde_T.data[1, :, 0, 0] = batch_atms[idx_T].data[1, :, 0, 0]
+dropsonde_T.data[2, :, 0, 0] = batch_atms[idx_T].data[14, :, 0, 0]
+
+dropsonde_WV = pa.arts.GriddedField4()
+dropsonde_WV.set_grid(0, ["T", "z", "abs_species-H2O"])
+dropsonde_WV.set_grid(1, batch_atms[idx_WV].grids[1][:])
+dropsonde_WV.data = np.zeros((3, len(dropsonde_WV.grids[1]), 1, 1))
+dropsonde_WV.data[0, :, 0, 0] = batch_atms[idx_WV].data[0, :, 0, 0]
+dropsonde_WV.data[1, :, 0, 0] = batch_atms[idx_WV].data[1, :, 0, 0]
+dropsonde_WV.data[2, :, 0, 0] = batch_atms[idx_WV].data[14, :, 0, 0]
 
 # add some noise
 rng = np.random.default_rng(12345)
-T_noise_free = dropsonde.data[0, :, 0, 0] * 1.0
-dropsonde.data[0, :, 0, 0] += rng.normal(0, 0.5, len(dropsonde.grids[1]))+T_offset
+T_noise_free_T = dropsonde_T.data[0, :, 0, 0] * 1.0
+dropsonde_T.data[0, :, 0, 0] += rng.normal(0, 0.5, len(dropsonde_T.grids[1]))+T_offset
 
-vmr_noise_free = dropsonde.data[2, :, 0, 0] * 1.0
-temp = np.log10(dropsonde.data[2, :, 0, 0])
-temp += rng.normal(0, 0.05, len(dropsonde.grids[1]))
-dropsonde.data[2, :, 0, 0] = 10**temp
+T_noise_free_WV = dropsonde_WV.data[0, :, 0, 0] * 1.0
+dropsonde_WV.data[0, :, 0, 0] += rng.normal(0, 0.5, len(dropsonde_WV.grids[1]))+T_offset
+
+vmr_noise_free_T = dropsonde_T.data[2, :, 0, 0] * 1.0
+temp = np.log10(dropsonde_T.data[2, :, 0, 0])
+temp += rng.normal(0, 0.05, len(dropsonde_T.grids[1]))
+dropsonde_T.data[2, :, 0, 0] = 10**temp
+
+vmr_noise_free_WV = dropsonde_WV.data[2, :, 0, 0] * 1.0
+temp = np.log10(dropsonde_WV.data[2, :, 0, 0])
+temp += rng.normal(0, 0.1, len(dropsonde_WV.grids[1]))+WV_offset
+dropsonde_WV.data[2, :, 0, 0] = 10**temp
 
 
 # plot dropsonde data
-fig2, ax2 = plt.subplots(1, 2, figsize=(10, 5))
+fig2, ax2 = plt.subplots(2, 2, figsize=(10, 10), sharey=True)
 
-ax2[0].plot(dropsonde.data[0, :, 0, 0], dropsonde.grids[1] / 1e3, label="obs")  # T
-ax2[0].plot(T_noise_free, dropsonde.grids[1] / 1e3, label="true")
-ax2[0].set_title("Temperature")
+ax2=ax2.flatten()
+ax2[0].plot(dropsonde_T.data[0, :, 0, 0], dropsonde_T.grids[1] / 1e3, label="obs")  # T
+ax2[0].plot(T_noise_free_T, dropsonde_T.grids[1] / 1e3, label="true")
+ax2[0].set_title("Temperature (for T retrieval)")
 ax2[0].set_xlabel("T / K")
 ax2[0].set_ylabel("p / hPa")
 ax2[0].set_yscale("log")
-ax2[0].invert_yaxis()
 ax2[0].legend()
 
-ax2[1].loglog(dropsonde.data[2, :, 0, 0], dropsonde.grids[1] / 1e3, label="obs")  # H2O
-ax2[1].loglog(vmr_noise_free, dropsonde.grids[1] / 1e3, label="true")
-ax2[1].set_title("H2O")
+ax2[1].loglog(dropsonde_T.data[2, :, 0, 0], dropsonde_T.grids[1] / 1e3, label="obs")  # H2O
+ax2[1].loglog(vmr_noise_free_T, dropsonde_T.grids[1] / 1e3, label="true")
+ax2[1].set_title("H2O (for T retrieval)")
 ax2[1].set_xlabel("H2O / vmr")
 ax2[1].set_ylabel("p / hPa")
-ax2[1].invert_yaxis()
+ax2[1].set_yscale("log")
 ax2[1].legend()
 
+ax2[2].plot(dropsonde_WV.data[0, :, 0, 0], dropsonde_WV.grids[1] / 1e3, label="obs")  # T
+ax2[2].plot(T_noise_free_WV, dropsonde_WV.grids[1] / 1e3, label="true")
+ax2[2].set_title("Temperature (for WV retrieval)")
+ax2[2].set_xlabel("T / K")
+ax2[2].set_ylabel("p / hPa")
+ax2[2].set_yscale("log")
+ax2[2].legend()
+
+ax2[3].loglog(dropsonde_WV.data[2, :, 0, 0], dropsonde_WV.grids[1] / 1e3, label="obs")  # H2O
+ax2[3].loglog(vmr_noise_free_WV, dropsonde_WV.grids[1] / 1e3, label="true")
+ax2[3].set_title("H2O (for WV retrieval)")
+ax2[3].set_xlabel("H2O / vmr")
+ax2[3].set_ylabel("p / hPa")
+ax2[3].set_yscale("log")
+ax2[3].legend()
+ax2[0].invert_yaxis()
 
 
 # %% now plot profles for check
@@ -435,11 +473,18 @@ for i, name in enumerate(plot_vars):
             clim=[np.min(data), np.max(data)],
             rasterized=True,
         )
+    elif 'mass_density' in name:
+        data[data < 1e-10] = 1e-10
+        data = np.log10(data)
+        cmap = "Blues"
+        pcm = ax_k.pcolormesh(
+            lat, p_grid / 1e3, data.T, cmap=cmap, clim=[-6, -2], rasterized=True
+        )
 
     else:
         data[data < 1e-10] = 1e-10
         data = np.log10(data)
-        cmap = "Blues"
+        cmap = "Greys"
         pcm = ax_k.pcolormesh(
             lat, p_grid / 1e3, data.T, cmap=cmap, clim=[-6, 1], rasterized=True
         )
@@ -469,9 +514,12 @@ batch_atms.savexml("atmosphere/atmospheres_true.xml")
 batch_aux1d.savexml("atmosphere/aux1d_true.xml")
 batch_aux2d.savexml("atmosphere/aux2d_true.xml")
 
-dropsonde.savexml("observation/dropsonde.xml")
+dropsonde_T.savexml("observation/dropsonde_T.xml")
+dropsonde_WV.savexml("observation/dropsonde_WV.xml")
 
 # %% save figures
+
+os.makedirs('check_plots', exist_ok=True)
 
 fig1.savefig("check_plots/profiles.pdf")
 fig.savefig("check_plots/columns.pdf")

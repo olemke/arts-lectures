@@ -6,5 +6,5 @@ channels:
 dependencies:
   - ipympl
   - jupyterlab
-  - pyarts=2.6.8
+  - pyarts=2.6.18
 
