@@ -1,18 +1,55 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+'''
+Radar Agenda Module for ARTS Cloud Radar Retrieval
 
+This module provides particle number density (PND) agendas for various microphysics
+schemes used in cloud radar retrievals with ARTS (Atmospheric Radiative Transfer
+Simulator).
 
-@author: Manfred Brath
-"""
+The module implements three main microphysics schemes:
+1. Seifert and Beheng (2006) two-moment scheme (SB06)
+2. Milbrandt and Yau (2005) two-moment scheme (MY05)
+3. COSMO-style scheme (CG)
 
+Each scheme provides PND agendas for different hydrometeor types:
+- LWC: Liquid Water Content (cloud water)
+- IWC: Ice Water Content (cloud ice)
+- RWC: Rain Water Content
+- SWC: Snow Water Content
+- GWC: Graupel Water Content
+- HWC: Hail Water Content
+
+Additional PSD (Particle Size Distribution) agendas are also provided:
+- Delanoë et al. (2014)
+- Abel and Boutle (2012)
+- Field et al. (2007) - Midlatitude and Tropical regimes
+- McFarquahar and Heymsfield (1997)
+
+Functions:
+    create_pnd_agendas_SB06_in_WS: Create SB06 PND agendas in workspace
+    set_pnd_agendas_SB06: Set SB06 PND agendas to workspace variables
+    create_pnd_agendas_MY05_in_WS: Create MY05 PND agendas in workspace
+    set_pnd_agendas_MY05: Set MY05 PND agendas to workspace variables
+    create_pnd_agendas_CG_in_WS: Create COSMO-style PND agendas in workspace
+    set_pnd_agendas_CG: Set COSMO-style PND agendas to workspace variables
+    create_additional_pnd_agendas_in_WS: Create additional PND agendas in workspace
+    set_additional_pnd_agendas: Set additional PND agendas to workspace variables
+    create_agendas_in_ws: Create all PND agendas and return sorted list of names
+    iy_radar_agenda_singlepol: Single polarization radar intensity agenda
+
+Notes:
+    - The COSMO-style scheme PSDs are not exactly those from COSMO model
+    - Graupel and snow are similar to COSMO graupel
+    - Cloud ice and cloud liquid are from Geer and Baordo (2014)
+    - RWC uses an existing ARTS parameterization
+'''
+    
 from pyarts.workspace import arts_agenda
-
 
 # =============================================================================
 # pnd_agendas
 # =============================================================================
-
 
 #### Seifert and Beheng, 2006 two moment scheme  ####
 # ==========================================================================

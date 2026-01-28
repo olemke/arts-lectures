@@ -1,8 +1,58 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Radar simulation and retrieval module for ARTS.
+This module provides classes and functions for simulating cloud radar observations
+and performing optimal estimation retrievals of hydrometeor properties using the
+Atmospheric Radiative Transfer Simulator (ARTS).
+Classes
+ARTSConfig
+    Base configuration class for ARTS simulations, managing paths, species, and
+    basic settings for flux and radar simulations.
+RadarSimulator
+    Main class for radar forward simulations and retrievals. Inherits from ARTSConfig
+    and provides methods for configuring scattering properties, defining hydrometeor
+    species, running forward simulations, and performing optimal estimation retrievals.
+Functions
+---------
+empirical_FWC_Z_relation(Z, a=0.137, b=0.643)
+    Convert radar reflectivity to frozen water content using empirical Z-FWC relation.
+empirical_RWC_Z_relation(Z, A=200, b=1.6, alpha=20.89, beta=1.15)
+    Convert radar reflectivity to rain water content using empirical Z-R-RWC relation.
+radar_reflectivity_to_apriori(y_cpr, z_cpr, z_background, sep_min_altitude, 
+                               sep_max_altitude, hydrometeors=['liquid', 'frozen'],
+                               min_val=1e-18, epsilon=1e-60)
+    Generate a priori ice and rain water content profiles from radar reflectivity
+    measurements with altitude-based phase separation.
+generate_gridded_field_from_profiles(pressure_profile, temperature_profile, 
+                                     z_field=None, gases={}, particulates={})
+    Create a GriddedField4 object from 1D profiles of atmospheric variables.
+add_scat_species(background_atm, species_name, type_name, 
+                 scat_species_profile=[], pressure_profile=None)
+    Add a scattering species profile to an existing background atmosphere object.
+This module requires the pyarts package and associated data files for scattering
+properties and spectroscopic line catalogs.
+>>> # Initialize radar simulator
+>>> radar = RadarSimulator()
+>>> radar.set_frequency_grid([94e9])  # 94 GHz W-band radar
+>>> # Define ice hydrometeor with Field et al. 2007 PSD
+>>> radar.set_frozen_hydrometeor('IWC', 'mass_density', 
+...                               PSD='FieldEtAl07TR',
+...                               scatterer='H2O_ice_full_spectrum')
+>>> # Run forward simulation
+>>> result = radar.cloud_radar_1D(atm, min_range_bin_altitude=2000,
+...                               max_range_bin_altitude=20000)
+>>> reflectivity = result['Z']
+>>> # Perform retrieval
+>>> Hyd_ret, DeltaHyd, y_fit, result = radar.hydrometeor_retrieval(
+...     y_obs=observations, S_y=obs_error_cov, S_a=prior_error_cov,
+...     background_atm=atm, retrieval_quantities=['IWC-mass_density'])
 
-@author: Manfred Brath
+Author
+Manfred Brath
+pyarts : Python interface to ARTS
+radar_agenda : Module containing agenda definitions for radar simulations
+
 """
 # %%
 import os
